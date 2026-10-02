@@ -1,0 +1,18 @@
+{
+  "name": "transcription-agent",
+  "version": "1.2.0",
+  "description": "Transcribe local audio to TXT, SRT, or JSON with Transcription Agent.",
+  "author": {
+    "name": "cyanxxy"
+  },
+  "homepage": "https://github.com/cyanxxy/transcription-agent-plugin#readme",
+  "repository": "https://github.com/cyanxxy/transcription-agent-plugin",
+  "license": "Apache-2.0",
+  "keywords": [
+    "audio",
+    "transcription",
+    "diarization",
+    "subtitles"
+  ],
+  "logo": "assets/logo.png"
+}

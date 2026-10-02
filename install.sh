@@ -4,6 +4,7 @@
 set -euo pipefail
 
 repo_url='https://github.com/cyanxxy/transcription-agent-plugin.git'
+# Keep the engine pin in sync with plugins/transcription-agent-cli/bin/transcriber-cli.
 engine_url='https://github.com/cyanxxy/transcription-agent-go.git'
 engine_ref='v1.1.0'
 engine_sha='db8313a7ef90a5d20e027328d0cab8d20fc28e8d'
@@ -115,7 +116,7 @@ main() {
     source_dir="$temp_dir/plugin"
   fi
   local skill_dir="$source_dir/plugins/transcription-agent/skills/transcribe-for-agents"
-  local wrapper="$source_dir/scripts/transcriber-cli"
+  local wrapper="$source_dir/plugins/transcription-agent-cli/bin/transcriber-cli"
   [[ -f "$skill_dir/SKILL.md" && -f "$wrapper" ]] || fail 'skill or CLI wrapper is missing from the source repository'
 
   local bin_dir="$HOME/.local/bin"
@@ -176,9 +177,19 @@ main() {
     cd "$engine_source"
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=$engine_version" -o "$temp_dir/transcriber-cli.bin" ./cmd/cli
   )
+  # The MCP server that `transcriber-cli mcp` runs.
+  local mcp_source="$source_dir/plugins/transcription-agent-cli/mcp-server" mcp_version
+  mcp_version="$(sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$mcp_source/../.claude-plugin/plugin.json" | head -n 1)"
+  printf 'Building the MCP server %s...\n' "$mcp_version"
+  (
+    cd "$mcp_source"
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=$mcp_version" -o "$temp_dir/transcriber-mcp" .
+  )
 
   mkdir -p "$data_dir" "$bin_dir"
   install -m 755 "$temp_dir/transcriber-cli.bin" "$data_dir/transcriber-cli.bin"
+  install -m 755 "$temp_dir/transcriber-mcp" "$data_dir/transcriber-mcp"
+  rm -f "$data_dir/transcriber-mcp.source"
   if [[ -e "$cli" ]] && ! cmp -s "$wrapper" "$cli"; then backup "$cli" transcriber-cli; fi
   install -m 755 "$wrapper" "$cli"
   for ((i = 0; i < ${#targets[@]}; i++)); do

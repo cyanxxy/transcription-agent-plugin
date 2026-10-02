@@ -1,13 +1,20 @@
 {
   "name": "transcription-agent",
-  "version": "1.1.0",
+  "displayName": "Transcription Agent",
+  "version": "1.2.0",
   "description": "Transcribe local audio with the Transcription Agent CLI.",
   "author": {
-    "name": "cyanxxy"
+    "name": "cyanxxy",
+    "url": "https://github.com/cyanxxy"
   },
   "homepage": "https://github.com/cyanxxy/transcription-agent-plugin#readme",
   "repository": "https://github.com/cyanxxy/transcription-agent-plugin",
   "license": "Apache-2.0",
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://github.com/cyanxxy/transcription-agent-plugin#readme",
+  "supportUrl": "https://github.com/cyanxxy/transcription-agent-plugin/issues",
+  "privacyPolicyUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/LICENSE",
   "keywords": [
     "audio",
     "transcription",

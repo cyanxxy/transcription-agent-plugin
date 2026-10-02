@@ -1,6 +1,6 @@
 {
   "name": "transcription-agent",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Transcribe local audio with the Transcription Agent CLI.",
   "author": {
     "name": "cyanxxy",
@@ -30,6 +30,8 @@
       "Create a speaker-labeled transcript from this audio."
     ],
     "websiteURL": "https://github.com/cyanxxy/transcription-agent-plugin",
+    "privacyPolicyURL": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/LICENSE",
     "brandColor": "#6D28D9",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/logo.png"

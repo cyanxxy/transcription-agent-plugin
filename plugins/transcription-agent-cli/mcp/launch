@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Claude-specific secure plugin options override credentials only when supplied.
+# Empty optional fields preserve inherited environment variables and saved auth.
+set -euo pipefail
+
+if [[ -n "${TRANSCRIBER_PLUGIN_GEMINI_API_KEY:-}" ]]; then
+  export GEMINI_API_KEY="$TRANSCRIBER_PLUGIN_GEMINI_API_KEY"
+fi
+if [[ -n "${TRANSCRIBER_PLUGIN_META_API_KEY:-}" ]]; then
+  export META_API_KEY="$TRANSCRIBER_PLUGIN_META_API_KEY"
+fi
+if [[ -n "${TRANSCRIBER_PLUGIN_AZURE_SPEECH_KEY:-}" ]]; then
+  export AZURE_SPEECH_KEY="$TRANSCRIBER_PLUGIN_AZURE_SPEECH_KEY"
+fi
+if [[ -n "${TRANSCRIBER_PLUGIN_AZURE_SPEECH_ENDPOINT:-}" ]]; then
+  export AZURE_SPEECH_ENDPOINT="$TRANSCRIBER_PLUGIN_AZURE_SPEECH_ENDPOINT"
+fi
+unset TRANSCRIBER_PLUGIN_GEMINI_API_KEY TRANSCRIBER_PLUGIN_META_API_KEY
+unset TRANSCRIBER_PLUGIN_AZURE_SPEECH_KEY TRANSCRIBER_PLUGIN_AZURE_SPEECH_ENDPOINT
+
+plugin_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+exec "$plugin_root/bin/transcriber-cli" mcp

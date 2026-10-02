@@ -1,0 +1,13 @@
+#!/bin/sh
+# MCPB entry point: picks this machine's binaries from the bundle, then runs the
+# MCP server. The server calls the bundled transcriber-cli wrapper, which loads
+# keys from the environment (the bundle's settings) or saved key files.
+set -eu
+dir="$(cd "$(dirname "$0")" && pwd)"
+case "$(uname -m)" in
+  x86_64 | amd64) arch=amd64 ;;
+  arm64 | aarch64) arch=arm64 ;;
+  *) echo "transcriber-mcp: unsupported CPU: $(uname -m)" >&2; exit 1 ;;
+esac
+TRANSCRIBER_CLI="$dir/transcriber-cli" TRANSCRIBER_ENGINE_BIN="$dir/transcriber-cli.bin-$arch" \
+  exec "$dir/transcriber-mcp-$arch"

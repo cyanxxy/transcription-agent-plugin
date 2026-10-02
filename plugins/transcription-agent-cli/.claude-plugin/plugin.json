@@ -1,0 +1,71 @@
+{
+  "name": "transcription-agent-cli",
+  "displayName": "Transcription Agent CLI",
+  "version": "1.2.0",
+  "description": "Provides transcriber-cli and MCP transcription tools in Claude Code, building the engine on first use so no separate installer is needed.",
+  "author": {
+    "name": "cyanxxy",
+    "url": "https://github.com/cyanxxy"
+  },
+  "homepage": "https://github.com/cyanxxy/transcription-agent-plugin#readme",
+  "repository": "https://github.com/cyanxxy/transcription-agent-plugin",
+  "license": "Apache-2.0",
+  "documentationUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/docs/claude.md",
+  "supportUrl": "https://github.com/cyanxxy/transcription-agent-plugin/issues",
+  "privacyPolicyUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/LICENSE",
+  "keywords": [
+    "audio",
+    "transcription",
+    "cli"
+  ],
+  "dependencies": [
+    "transcription-agent"
+  ],
+  "mcpServers": {
+    "transcription-agent": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/mcp/launch",
+      "args": [],
+      "timeout": 1860000,
+      "env": {
+        "TRANSCRIBER_PLUGIN_GEMINI_API_KEY": "${user_config.gemini_api_key}",
+        "TRANSCRIBER_PLUGIN_META_API_KEY": "${user_config.meta_api_key}",
+        "TRANSCRIBER_PLUGIN_AZURE_SPEECH_KEY": "${user_config.azure_speech_key}",
+        "TRANSCRIBER_PLUGIN_AZURE_SPEECH_ENDPOINT": "${user_config.azure_speech_endpoint}"
+      }
+    }
+  },
+  "userConfig": {
+    "gemini_api_key": {
+      "type": "string",
+      "title": "Gemini API key (optional)",
+      "description": "For gemini-3.5-transcribe. Leave empty to use your exported key or transcriber-cli auth configuration. Applies to MCP tools.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "meta_api_key": {
+      "type": "string",
+      "title": "Meta API key (optional)",
+      "description": "For muse-voice-transcribe-1.0. Leave empty to use your exported key or transcriber-cli auth configuration. Applies to MCP tools.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "azure_speech_key": {
+      "type": "string",
+      "title": "Azure Speech key (optional)",
+      "description": "For MAI-Transcribe-2; also set the endpoint. Leave empty to use your exported key or transcriber-cli auth configuration. Applies to MCP tools.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    },
+    "azure_speech_endpoint": {
+      "type": "string",
+      "title": "Azure Speech endpoint (optional)",
+      "description": "Your resource origin, for example https://your-resource.cognitiveservices.azure.com. Leave empty to keep existing configuration. Applies to MCP tools.",
+      "required": false,
+      "default": ""
+    }
+  }
+}

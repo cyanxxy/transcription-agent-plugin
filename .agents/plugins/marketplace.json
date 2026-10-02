@@ -18,6 +18,21 @@
         ]
       },
       "category": "Productivity"
+    },
+    {
+      "name": "transcription-agent-mcp",
+      "source": {
+        "source": "local",
+        "path": "./plugins/transcription-agent-mcp"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL",
+        "products": [
+          "CODEX"
+        ]
+      },
+      "category": "Productivity"
     }
   ]
 }

@@ -1,0 +1,16 @@
+{
+  "name": "transcription-agent-tools",
+  "owner": {
+    "name": "cyanxxy"
+  },
+  "metadata": {
+    "description": "Transcription Agent plugin with a shared audio transcription skill."
+  },
+  "plugins": [
+    {
+      "name": "transcription-agent",
+      "source": "plugins/transcription-agent",
+      "description": "Transcribe local audio to TXT, SRT, or JSON with Transcription Agent."
+    }
+  ]
+}

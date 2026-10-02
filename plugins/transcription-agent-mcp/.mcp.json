@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "transcription-agent": {
+      "command": "./scripts/launch-mcp.sh",
+      "args": [],
+      "cwd": ".",
+      "startup_timeout_sec": 30,
+      "tool_timeout_sec": 1860,
+      "env_vars": [
+        "HOME",
+        "PATH",
+        "XDG_CONFIG_HOME",
+        "XDG_DATA_HOME",
+        "TRANSCRIBER_CLI",
+        "TRANSCRIBER_ENGINE_BIN",
+        "TRANSCRIBER_MCP_BIN",
+        "GEMINI_API_KEY",
+        "META_API_KEY",
+        "AZURE_SPEECH_KEY",
+        "AZURE_SPEECH_ENDPOINT"
+      ]
+    }
+  }
+}

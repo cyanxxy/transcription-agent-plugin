@@ -1,0 +1,81 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/schemas/mcpb-manifest-v0.3.schema.json",
+  "manifest_version": "0.3",
+  "name": "transcription-agent",
+  "display_name": "Transcription Agent",
+  "version": "__VERSION__",
+  "description": "Transcribe local recordings into speaker-labeled, timestamped TXT, SRT, or JSON with Gemini, Meta, or Microsoft speech models.",
+  "long_description": "Give Claude a local MP3, WAV, M4A, FLAC, or OGG recording and get back a transcript with speaker labels and timestamps, saved beside the audio as plain text, SRT subtitles, or JSON segments. Audio is sent only to the speech provider you choose: Google Gemini 3.5 Transcribe (default), Meta Muse Voice Transcribe, or Microsoft MAI-Transcribe-2. Requires FFmpeg (for example `brew install ffmpeg`). Keys you enter here are kept in secure storage; keys saved with `transcriber-cli auth set` also work.",
+  "author": {
+    "name": "cyanxxy",
+    "url": "https://github.com/cyanxxy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cyanxxy/transcription-agent-plugin"
+  },
+  "homepage": "https://github.com/cyanxxy/transcription-agent-plugin#readme",
+  "support": "https://github.com/cyanxxy/transcription-agent-plugin/issues",
+  "license": "Apache-2.0",
+  "privacy_policies": [
+    "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/PRIVACY.md"
+  ],
+  "icon": "icon.png",
+  "keywords": ["audio", "transcription", "diarization", "subtitles", "speech-to-text"],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/launch",
+    "mcp_config": {
+      "command": "${__dirname}/server/launch",
+      "args": [],
+      "env": {
+        "GEMINI_API_KEY": "${user_config.gemini_api_key}",
+        "META_API_KEY": "${user_config.meta_api_key}",
+        "AZURE_SPEECH_KEY": "${user_config.azure_speech_key}",
+        "AZURE_SPEECH_ENDPOINT": "${user_config.azure_speech_endpoint}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "transcribe",
+      "description": "Transcribe a local recording with speaker labels and timestamps and save it as TXT, SRT, or JSON."
+    },
+    {
+      "name": "auth_status",
+      "description": "Show which speech providers have an API key configured, without showing the keys."
+    }
+  ],
+  "user_config": {
+    "gemini_api_key": {
+      "type": "string",
+      "title": "Gemini API key",
+      "description": "For the default model, gemini-3.5-transcribe. Leave empty to use a key saved with transcriber-cli.",
+      "sensitive": true,
+      "required": false
+    },
+    "meta_api_key": {
+      "type": "string",
+      "title": "Meta API key (optional)",
+      "description": "For muse-voice-transcribe-1.0.",
+      "sensitive": true,
+      "required": false
+    },
+    "azure_speech_key": {
+      "type": "string",
+      "title": "Azure Speech key (optional)",
+      "description": "For MAI-Transcribe-2. Also set the Azure Speech endpoint.",
+      "sensitive": true,
+      "required": false
+    },
+    "azure_speech_endpoint": {
+      "type": "string",
+      "title": "Azure Speech endpoint (optional)",
+      "description": "Your resource origin, for example https://your-resource.cognitiveservices.azure.com",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["__PLATFORM__"]
+  }
+}

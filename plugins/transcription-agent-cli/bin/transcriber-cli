@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # transcribe-for-agents wrapper: loads saved provider credentials, then runs the
-# transcriber-cli.bin engine installed by install.sh.
+# transcriber-cli.bin engine installed by install.sh. The same file is the
+# Claude Code transcription-agent-cli plugin's bin/transcriber-cli, which builds
+# the engine on first use when install.sh has not.
 set -euo pipefail
+
+# Keep in sync with install.sh; tests/install_test.sh checks that they match.
+engine_url='https://github.com/cyanxxy/transcription-agent-go.git'
+engine_ref='v1.1.0'
+engine_sha='db8313a7ef90a5d20e027328d0cab8d20fc28e8d'
 
 data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/transcribe-for-agents"
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/transcribe-for-agents"
@@ -165,7 +172,71 @@ if [[ "${1:-}" == auth ]]; then
   exit 0
 fi
 
-[[ -x "$engine" ]] || fail "transcription engine is missing: $engine (run the installer again)"
+# build_engine: build the pinned engine into the data directory, the same way
+# install.sh does. Progress goes to stderr so stdout stays the transcript.
+build_engine() {
+  local temp source="${TRANSCRIBE_ENGINE_SOURCE:-}"
+  if ! command -v go >/dev/null 2>&1 || ! command -v git >/dev/null 2>&1; then
+    fail "transcription engine is missing: $engine (install Go and git so it can be built, or run the installer)"
+  fi
+  temp="$(mktemp -d)"
+  printf 'transcriber-cli: building the transcription engine %s (first run only)...\n' "$engine_ref" >&2
+  if [[ -z "$source" ]]; then
+    git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$engine_ref" "$engine_url" "$temp/src" >&2 ||
+      { rm -rf "$temp"; fail 'could not download the transcription engine source'; }
+    source="$temp/src"
+    [[ "$(git -C "$source" rev-parse HEAD)" == "$engine_sha" ]] ||
+      { rm -rf "$temp"; fail 'release tag does not match the pinned source commit'; }
+  fi
+  (cd "$source" && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=$engine_ref" -o "$temp/engine" ./cmd/cli) >&2 ||
+    { rm -rf "$temp"; fail 'could not build the transcription engine'; }
+  mkdir -p "$data_dir"
+  # Install under a unique name, then rename, so a concurrent run never sees a partial file.
+  install -m 755 "$temp/engine" "$engine.$$"
+  mv -f "$engine.$$" "$engine"
+  rm -rf "$temp"
+}
+
+# mcp_stamp <source dir>: a checksum of the MCP server source, so a plugin
+# update rebuilds the server.
+mcp_stamp() { cat "$1/go.mod" "$1/go.sum" "$1"/*.go "$1/viewer.html" | cksum; }
+
+# build_mcp <source dir> <server path>: build the MCP server from the source
+# shipped beside this script in the Claude Code plugin or a checkout.
+build_mcp() {
+  local temp version
+  command -v go >/dev/null 2>&1 || fail "MCP server is missing: $2 (install Go so it can be built, or run the installer)"
+  version="$(sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$1/../.claude-plugin/plugin.json" 2>/dev/null | head -n 1)"
+  temp="$(mktemp -d)"
+  printf 'transcriber-cli: building the MCP server (first run only)...\n' >&2
+  (cd "$1" && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${version:-dev}" -o "$temp/server" .) >&2 ||
+    { rm -rf "$temp"; fail 'could not build the MCP server'; }
+  mkdir -p "$(dirname "$2")"
+  install -m 755 "$temp/server" "$2.$$"
+  mv -f "$2.$$" "$2"
+  mcp_stamp "$1" > "$2.source"
+  rm -rf "$temp"
+}
+
+# transcriber-cli mcp: run the stdio MCP server. It calls this wrapper for each
+# transcription, so credentials and model checks stay in one place.
+if [[ "${1:-}" == mcp ]]; then
+  [[ $# -eq 1 ]] || fail 'usage: transcriber-cli mcp'
+  self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+  server="${TRANSCRIBER_MCP_BIN:-$data_dir/transcriber-mcp}"
+  mcp_source="$(dirname "$self")/../mcp-server"
+  if [[ -z "${TRANSCRIBER_MCP_BIN:-}" && -f "$mcp_source/go.mod" ]] &&
+     { [[ ! -x "$server" ]] || [[ "$(cat "$server.source" 2>/dev/null)" != "$(mcp_stamp "$mcp_source")" ]]; }; then
+    build_mcp "$mcp_source" "$server"
+  fi
+  [[ -x "$server" ]] || fail "MCP server is missing: $server (run the installer again)"
+  TRANSCRIBER_CLI="$self" exec "$server"
+fi
+
+if [[ ! -x "$engine" ]]; then
+  [[ -z "${TRANSCRIBER_ENGINE_BIN:-}" ]] || fail "transcription engine is missing: $engine"
+  build_engine
+fi
 
 # Only the three direct speech models are supported. The model also picks the
 # provider: only that provider's credentials reach the engine (and the ffmpeg

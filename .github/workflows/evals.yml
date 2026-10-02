@@ -1,0 +1,51 @@
+name: Plugin evals
+
+# Each case runs a real Claude session, so this costs API credit. It runs on
+# demand and from the Release workflow (a release created with GITHUB_TOKEN
+# doesn't trigger `release` events, so Release calls this directly). Needs the
+# ANTHROPIC_API_KEY secret; without it the eval steps are skipped.
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      ANTHROPIC_API_KEY:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DISABLE_AUTOUPDATER: "1"
+    steps:
+      - name: Skip without an API key
+        if: env.ANTHROPIC_API_KEY == ''
+        run: echo "::notice::ANTHROPIC_API_KEY is not set; skipping plugin evals."
+      - uses: actions/checkout@v7.0.1
+        if: env.ANTHROPIC_API_KEY != ''
+      - name: Install Claude Code
+        if: env.ANTHROPIC_API_KEY != ''
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash -s stable
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      # The cases grant no shell access, so they check when the skill loads and
+      # that no transcript is invented; they never call a speech provider.
+      # --ablation none keeps the `tool_used: Skill` graders in each case's
+      # score; in the default two-arm mode they're excluded from it.
+      - name: Run evals
+        if: env.ANTHROPIC_API_KEY != ''
+        working-directory: plugins/transcription-agent
+        run: |
+          claude plugin eval . --trust-plugin --ablation none --json results.json --threshold 0.8 \
+            --no-publish --max-cost-usd 20
+      - uses: actions/upload-artifact@v7.0.1
+        if: always() && env.ANTHROPIC_API_KEY != ''
+        with:
+          name: eval-results
+          path: |
+            plugins/transcription-agent/results.json
+            plugins/transcription-agent/evals/results/

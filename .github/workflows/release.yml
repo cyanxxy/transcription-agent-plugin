@@ -1,0 +1,67 @@
+name: Release
+
+# Pushing a tag such as v1.2.0 builds the MCPB bundles, attaches them to a
+# GitHub release, and publishes server.json to the MCP registry. The tag must
+# match the version in plugins/transcription-agent-cli/.claude-plugin/plugin.json.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and upload bundles
+      id-token: write # MCP registry login with GitHub OIDC
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: plugins/transcription-agent-cli/mcp-server/go.mod
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+      - name: Check the tag matches the plugin version
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("plugins/transcription-agent-cli/.claude-plugin/plugin.json"))["version"])')"
+          [[ "v$version" == "$GITHUB_REF_NAME" ]] || { echo "tag $GITHUB_REF_NAME does not match plugin version $version"; exit 1; }
+      - name: Test the MCP server
+        working-directory: plugins/transcription-agent-cli/mcp-server
+        run: go test -race ./...
+      - name: Build MCPB bundles
+        run: |
+          bash mcpb/build.sh darwin dist
+          bash mcpb/build.sh linux dist
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.mcpb --title "$GITHUB_REF_NAME" --generate-notes
+      - name: Point server.json at the released bundles
+        run: |
+          python3 - <<'EOF'
+          import hashlib, json, os
+          tag = os.environ["GITHUB_REF_NAME"]
+          doc = json.load(open("server.json"))
+          doc["version"] = tag[1:]
+          for pkg in doc["packages"]:
+              name = pkg["identifier"].rsplit("/", 1)[1]
+              pkg["identifier"] = f"https://github.com/cyanxxy/transcription-agent-plugin/releases/download/{tag}/{name}"
+              pkg["version"] = tag[1:]
+              pkg["fileSha256"] = hashlib.sha256(open(f"dist/{name}", "rb").read()).hexdigest()
+          json.dump(doc, open("server.json", "w"), indent=2)
+          EOF
+          cat server.json
+      - name: Publish to the MCP registry
+        run: |
+          curl -fsSL https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz | tar xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
+
+  # Called directly because the release above is created with GITHUB_TOKEN,
+  # which doesn't trigger other workflows' `release` events. Evals don't block
+  # publishing.
+  evals:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/evals.yml
+    secrets: inherit

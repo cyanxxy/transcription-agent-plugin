@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "transcription-agent-mcp",
+  "version": "1.2.0",
+  "description": "MCP tools and transcript previews for an installed Transcription Agent CLI.",
+  "author": { "name": "cyanxxy", "url": "https://github.com/cyanxxy" },
+  "homepage": "https://github.com/cyanxxy/transcription-agent-plugin#native-mcp-plugin",
+  "repository": "https://github.com/cyanxxy/transcription-agent-plugin",
+  "license": "Apache-2.0",
+  "keywords": ["audio", "transcription", "mcp", "subtitles"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Transcription Agent MCP",
+        "shortDescription": "Transcribe audio with MCP tools and previews.",
+        "longDescription": "Connect your installed transcriber-cli to Codex and the ChatGPT desktop app. Requires the installer and FFmpeg; local files only.",
+        "developerName": "cyanxxy",
+        "category": "Productivity",
+        "capabilities": ["Write"],
+        "defaultPrompt": ["Transcribe this recording and save subtitles."],
+        "websiteURL": "https://github.com/cyanxxy/transcription-agent-plugin",
+        "privacyPolicyURL": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/PRIVACY.md",
+        "brandColor": "#6D28D9",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      }
+    }
+  }
+}

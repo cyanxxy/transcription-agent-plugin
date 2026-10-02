@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transcript viewer</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #fff; --surface: #f5f5f7; --text: #202126; --muted: #666873; --border: #dedee5; --accent: #6d28d9; --highlight: #fff0b8; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #202024; --surface: #29292e; --text: #efeff3; --muted: #b6b6c1; --border: #404048; --accent: #b897ff; --highlight: #624c16; } }
+    :root[data-theme="dark"] { --bg: #202024; --surface: #29292e; --text: #efeff3; --muted: #b6b6c1; --border: #404048; --accent: #b897ff; --highlight: #624c16; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-background-primary, var(--bg)); color: var(--color-text-primary, var(--text)); font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); font-size: 14px; line-height: 1.5; }
+    main { padding: 20px; max-width: 100%; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    h1 { font-size: 19px; line-height: 1.25; letter-spacing: -.02em; margin: 0 0 5px; font-weight: 650; }
+    .muted { color: var(--color-text-secondary, var(--muted)); }
+    #metadata { font-size: 12px; margin: 0; overflow-wrap: anywhere; }
+    .badge { display: inline-flex; font-size: 11px; font-weight: 650; letter-spacing: .035em; padding: 4px 8px; border-radius: 6px; background: var(--color-background-secondary, var(--surface)); color: var(--color-text-secondary, var(--muted)); }
+    .file { margin: 0 0 14px; padding: 9px 12px; border: 1px solid var(--color-border-primary, var(--border)); border-radius: 8px; overflow-wrap: anywhere; font-size: 12px; }
+    .file span { display: block; margin-bottom: 2px; font-size: 10px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-secondary, var(--muted)); }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 12px; }
+    .search { flex: 1 1 140px; min-width: 0; display: flex; align-items: center; position: relative; }
+    input, button { font: inherit; border: 1px solid var(--color-border-primary, var(--border)); border-radius: 7px; background: var(--color-background-primary, var(--bg)); color: inherit; }
+    input { width: 100%; height: 34px; padding: 6px 10px; }
+    input:focus-visible, button:focus-visible, pre:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button { cursor: pointer; min-height: 34px; padding: 5px 11px; font-size: 12px; font-weight: 550; }
+    button:hover:enabled { background: var(--color-background-secondary, var(--surface)); }
+    button:disabled { cursor: default; opacity: .5; }
+    .navigation { display: flex; align-items: center; gap: 4px; }
+    .navigation button { width: 30px; padding: 3px; }
+    #match-count { font-size: 11px; min-width: 42px; text-align: center; color: var(--color-text-secondary, var(--muted)); }
+    #notice { margin: 0 0 12px; font-size: 12px; color: var(--color-text-secondary, var(--muted)); }
+    #notice:empty { display: none; }
+    pre { margin: 0; padding: 14px; border-radius: 9px; background: var(--color-background-secondary, var(--surface)); font: 13px/1.7 var(--font-mono, ui-monospace, SFMono-Regular, Consolas, monospace); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow-y: auto; }
+    pre mark { background: var(--highlight); color: inherit; border-radius: 2px; }
+    pre mark.current { outline: 1px solid var(--accent); }
+    footer { min-height: 20px; margin-top: 10px; font-size: 11px; color: var(--color-text-secondary, var(--muted)); }
+    [hidden] { display: none !important; }
+    @media (max-width: 420px) { main { padding: 14px; } .toolbar { gap: 6px; } .search { flex-basis: 100%; } pre { padding: 11px; max-height: 310px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><h1 id="heading">Transcript</h1><p id="metadata" class="muted">Waiting for the transcription result…</p></div>
+    <span id="format" class="badge" hidden></span>
+  </header>
+  <p class="file" id="file" hidden><span>Saved file</span><b id="path"></b></p>
+  <div class="toolbar">
+    <div class="search"><input id="search" type="search" placeholder="Find in transcript" aria-label="Find in transcript" disabled></div>
+    <div class="navigation"><button id="previous" aria-label="Previous match" disabled>↑</button><span id="match-count" aria-live="polite"></span><button id="next" aria-label="Next match" disabled>↓</button></div>
+    <button id="copy" disabled>Copy transcript</button>
+    <button id="load" hidden>Load full transcript</button>
+  </div>
+  <p id="notice" role="status"></p>
+  <pre id="transcript" tabindex="0" aria-label="Transcript text">The transcript will appear here when it is ready.</pre>
+  <footer id="feedback" role="status" aria-live="polite"></footer>
+</main>
+<script>
+(() => {
+  // The documented MCP Apps postMessage bridge keeps this HTML self-contained.
+  // No network assets or additional runtime/build dependencies are needed.
+  const el = Object.fromEntries(['heading', 'metadata', 'format', 'file', 'path', 'search', 'previous', 'next', 'match-count', 'copy', 'load', 'notice', 'transcript', 'feedback'].map(id => [id, document.getElementById(id)]));
+  const pending = new Map();
+  let nextId = 1, text = '', result = null, hostCapabilities = {}, matches = [], current = -1, generation = 0, loading = false, connected = false;
+  const uiVersion = '2026-01-26';
+  const maxResourceChars = 8 * 1024 * 1024;
+
+  function notify(method, params = {}) {
+    window.parent.postMessage({ jsonrpc: '2.0', method, params }, '*');
+  }
+  function request(method, params) {
+    const id = nextId++;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { pending.delete(id); reject(new Error('The host did not respond.')); }, 15000);
+      pending.set(id, { resolve, reject, timer });
+      window.parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+    });
+  }
+  function applyHostContext(context) {
+    if (!context || typeof context !== 'object') return;
+    if (context.theme === 'light' || context.theme === 'dark') document.documentElement.dataset.theme = context.theme;
+    const allowed = ['--color-background-primary', '--color-background-secondary', '--color-text-primary', '--color-text-secondary', '--color-border-primary', '--font-sans', '--font-mono'];
+    for (const name of allowed) {
+      const value = context.styles?.variables?.[name];
+      if (typeof value === 'string') document.documentElement.style.setProperty(name, value);
+      else if (value === null) document.documentElement.style.removeProperty(name);
+    }
+  }
+  function updateActions() {
+    el.search.disabled = !text;
+    el.copy.disabled = !text;
+    el.copy.textContent = result?.truncated ? 'Copy preview' : 'Copy transcript';
+    el.load.hidden = !(connected && result?.truncated && typeof result.resource_uri === 'string' && hostCapabilities.serverResources);
+    el.load.disabled = loading;
+    el.load.textContent = loading ? 'Loading…' : 'Load full transcript';
+  }
+  function renderText() {
+    const query = el.search.value;
+    matches = []; current = -1;
+    el.transcript.replaceChildren();
+    if (!text) {
+      el.transcript.textContent = result ? 'No preview text was returned. The saved file contains the transcript.' : 'The transcript will appear here when it is ready.';
+    } else if (!query) {
+      el.transcript.textContent = text;
+    } else {
+      const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+      const fragment = document.createDocumentFragment();
+      let offset = 0, match = pattern.exec(text);
+      while (match && matches.length < 1000) {
+        fragment.appendChild(document.createTextNode(text.slice(offset, match.index)));
+        const mark = document.createElement('mark');
+        mark.textContent = match[0];
+        fragment.appendChild(mark); matches.push(mark);
+        offset = match.index + match[0].length; match = pattern.exec(text);
+      }
+      fragment.appendChild(document.createTextNode(text.slice(offset)));
+      el.transcript.appendChild(fragment);
+      if (matches.length) moveMatch(1, false);
+    }
+    el.previous.disabled = el.next.disabled = matches.length === 0;
+    if (!matches.length) el['match-count'].textContent = query ? '0 found' : '';
+  }
+  function moveMatch(direction, scroll = true) {
+    if (!matches.length) return;
+    if (current >= 0) matches[current].classList.remove('current');
+    current = (current + direction + matches.length) % matches.length;
+    matches[current].classList.add('current');
+    el['match-count'].textContent = `${current + 1}/${matches.length}${matches.length === 1000 ? '+' : ''}`;
+    if (scroll) matches[current].scrollIntoView({ block: 'nearest' });
+  }
+  function showResult(toolResult) {
+    generation++; loading = false; el.feedback.textContent = ''; el.search.value = '';
+    result = toolResult?.structuredContent ?? null;
+    if (toolResult?.isError || result?.error) {
+      const failure = result?.error;
+      const recoveredPath = typeof failure?.recovery_output_path === 'string' ? failure.recovery_output_path : '';
+      text = ''; result = null;
+      el.heading.textContent = 'Transcription failed';
+      el.metadata.textContent = recoveredPath ? 'Transcript saved to recovery file.' : 'No transcript is available from this call.';
+      el.path.textContent = recoveredPath;
+      el.file.hidden = !recoveredPath; el.format.hidden = true;
+      el.notice.textContent = [failure?.message || 'The transcription could not be completed.', recoveredPath && failure?.next_action].filter(Boolean).join(' ');
+      renderText(); el.transcript.textContent = recoveredPath ? 'Open the saved recovery file to view the transcript.' : 'No transcript was returned from this call.'; updateActions(); return;
+    }
+    if (!result || typeof result.transcript !== 'string') return;
+    text = result.transcript;
+    el.heading.textContent = 'Transcript';
+    el.metadata.textContent = [result.model, Number.isFinite(result.bytes) ? `${new Intl.NumberFormat().format(result.bytes)} bytes saved` : ''].filter(Boolean).join(' · ');
+    el.path.textContent = typeof result.output_path === 'string' ? result.output_path : '';
+    el.file.hidden = !el.path.textContent;
+    el.format.textContent = typeof result.format === 'string' ? result.format.toUpperCase() : '';
+    el.format.hidden = !el.format.textContent;
+    el.notice.textContent = result.truncated ? 'This is a shortened preview. Search and copy apply to the preview; the saved file contains the full transcript.' : '';
+    renderText(); updateActions();
+  }
+  async function loadFull() {
+    if (!result?.truncated || !hostCapabilities.serverResources || loading) return;
+    const uri = result.resource_uri, started = generation;
+    if (typeof uri !== 'string' || !uri) return;
+    loading = true; updateActions(); el.feedback.textContent = '';
+    try {
+      const response = await request('resources/read', { uri });
+      if (generation !== started) return;
+      const content = response?.contents;
+      if (!Array.isArray(content) || content.length !== 1 || content[0].uri !== uri || typeof content[0].text !== 'string') throw new Error('The host did not return the requested transcript.');
+      if (content[0].text.length > maxResourceChars) throw new Error('This transcript is too large for the viewer. Open the saved file.');
+      text = content[0].text; result = { ...result, truncated: false };
+      el.notice.textContent = ''; el.feedback.textContent = 'Full transcript loaded.';
+      renderText();
+    } catch (error) {
+      if (generation === started) el.feedback.textContent = `${error.message || 'Could not load the full transcript.'} The preview is still available; open the saved file for the full text.`;
+    } finally {
+      if (generation === started) { loading = false; updateActions(); }
+    }
+  }
+  async function copyText() {
+    if (!text) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+      el.feedback.textContent = result?.truncated ? 'Preview copied.' : 'Transcript copied.';
+    } catch (_) {
+      const selection = window.getSelection();
+      if (selection) { const range = document.createRange(); range.selectNodeContents(el.transcript); selection.removeAllRanges(); selection.addRange(range); }
+      el.feedback.textContent = 'Text selected. Use your browser or system Copy command.';
+    }
+  }
+  function receive(event) {
+    if (event.source !== window.parent || !event.data || event.data.jsonrpc !== '2.0') return;
+    const message = event.data;
+    if (!message.method && pending.has(message.id)) {
+      const action = pending.get(message.id); pending.delete(message.id); clearTimeout(action.timer);
+      if (message.error) action.reject(new Error(message.error.message || 'The host rejected the request.')); else action.resolve(message.result);
+      return;
+    }
+    if (message.method === 'ui/notifications/tool-result') showResult(message.params);
+    else if (message.method === 'ui/notifications/host-context-changed') applyHostContext(message.params);
+    else if (message.method === 'ui/notifications/tool-cancelled') showResult({ isError: true, structuredContent: { error: { message: 'Transcription was cancelled.' } } });
+    else if (message.method === 'ping' && message.id !== undefined) window.parent.postMessage({ jsonrpc: '2.0', id: message.id, result: {} }, '*');
+    else if (message.method === 'ui/resource-teardown' && message.id !== undefined) {
+      generation++; observer?.disconnect(); window.removeEventListener('message', receive);
+      for (const action of pending.values()) { clearTimeout(action.timer); action.reject(new Error('Viewer closed.')); }
+      pending.clear(); window.parent.postMessage({ jsonrpc: '2.0', id: message.id, result: {} }, '*');
+    }
+  }
+  el.search.addEventListener('input', renderText);
+  el.search.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } });
+  el.previous.addEventListener('click', () => moveMatch(-1));
+  el.next.addEventListener('click', () => moveMatch(1));
+  el.copy.addEventListener('click', copyText);
+  el.load.addEventListener('click', loadFull);
+  window.addEventListener('message', receive);
+  const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
+    if (connected) notify('ui/notifications/size-changed', { width: Math.ceil(document.body.getBoundingClientRect().width), height: Math.ceil(document.body.getBoundingClientRect().height) });
+  }) : null;
+  observer?.observe(document.body);
+  request('ui/initialize', { appInfo: { name: 'transcription-agent-viewer', version: '1.0.0' }, appCapabilities: { availableDisplayModes: ['inline'] }, protocolVersion: uiVersion }).then(response => {
+    if (response?.protocolVersion !== uiVersion) throw new Error('The host uses an unsupported viewer protocol.');
+    hostCapabilities = response.hostCapabilities ?? {}; connected = true;
+    applyHostContext(response.hostContext); notify('ui/notifications/initialized'); updateActions();
+  }).catch(() => { el.feedback.textContent = 'Interactive host connection is unavailable. The saved transcript remains accessible from the tool result.'; });
+})();
+</script>
+</body>
+</html>

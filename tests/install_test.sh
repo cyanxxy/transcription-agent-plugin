@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Hermetic tests for install.sh and scripts/transcriber-cli. Go, git, ffmpeg and
-# ffprobe are replaced with fakes, so no network access or toolchain is needed.
+# Hermetic tests for install.sh and the transcriber-cli wrapper. Go, git, ffmpeg
+# and ffprobe are replaced with fakes, so no network access or toolchain is needed.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+wrapper_src="$repo/plugins/transcription-agent-cli/bin/transcriber-cli"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 failures=0
@@ -79,7 +80,7 @@ printf '#!/usr/bin/env bash\n# transcribe-for-agents old wrapper\nexec transcrib
 check 'upgrade over an older install succeeds' quiet run_install --skip-auth
 check 'upgrade replaces the skill' diff -q "$repo/plugins/transcription-agent/skills/transcribe-for-agents/SKILL.md" \
   "$home/.claude/skills/transcribe-for-agents/SKILL.md"
-check 'upgrade replaces the wrapper' cmp -s "$repo/scripts/transcriber-cli" "$home/.local/bin/transcriber-cli"
+check 'upgrade replaces the wrapper' cmp -s "$wrapper_src" "$home/.local/bin/transcriber-cli"
 check 'upgrade backs up the old skill' test -n "$(find "$home/.local/share/transcribe-for-agents/backups" -name claude-skill)"
 check 'upgrade backs up the old wrapper' test -n "$(find "$home/.local/share/transcribe-for-agents/backups" -name transcriber-cli)"
 check 'backups stay out of the skills directory' test "$(find "$home/.claude/skills" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" = 1
@@ -204,6 +205,64 @@ check 'installer reports an already saved key instead of prompting' \
 
 check 'auth remove deletes the saved key' quiet cli "$wrapper" auth remove meta
 check 'meta key file is gone' test ! -e "$config/meta.key"
+
+pin() { sed -n "s/^$1='\(.*\)'\$/\1/p" "$2"; }
+for name in engine_url engine_ref engine_sha; do
+  check "install.sh and the wrapper pin the same $name" \
+    test -n "$(pin "$name" "$wrapper_src")" -a "$(pin "$name" "$repo/install.sh")" = "$(pin "$name" "$wrapper_src")"
+done
+
+# The Claude Code plugin's bin/transcriber-cli builds the engine on first use
+# when install.sh has not installed it.
+new_home
+plugin_cli() {
+  env -i HOME="$home" PATH="$1" TRANSCRIBE_ENGINE_SOURCE="$work/engine" GEMINI_API_KEY=g "$wrapper_src" -i a.m4a
+}
+check 'first run without Go explains how to get the engine' \
+  grep -q 'install Go and git' <<<"$(plugin_cli /usr/bin:/bin 2>&1 || true)"
+check 'first run builds the missing engine' test "$(plugin_cli "$fakes:/usr/bin:/bin" 2>/dev/null)" = 'env GEMINI_API_KEY'
+check 'first run installs the engine where install.sh does' \
+  test -x "$home/.local/share/transcribe-for-agents/transcriber-cli.bin"
+check 'later runs keep stdout clean' test "$(plugin_cli "$fakes:/usr/bin:/bin")" = 'env GEMINI_API_KEY'
+check 'build progress goes to stderr' \
+  grep -q 'first run only' <<<"$(rm "$home/.local/share/transcribe-for-agents/transcriber-cli.bin"; plugin_cli "$fakes:/usr/bin:/bin" 2>&1 >/dev/null)"
+check 'a missing TRANSCRIBER_ENGINE_BIN is not built' \
+  not env -i HOME="$home" PATH="$fakes:/usr/bin:/bin" TRANSCRIBER_ENGINE_BIN="$work/none" "$wrapper_src" -i a.m4a
+
+# transcriber-cli mcp ------------------------------------------------------
+# The fake go writes a script that prints the credentials it sees; here it also
+# stands in for the MCP server, so running it proves the wrapper exec'd it.
+new_home
+run_install --skip-auth >/dev/null 2>&1
+server="$home/.local/share/transcribe-for-agents/transcriber-mcp"
+check 'installer installs the MCP server' test -x "$server"
+check 'installed wrapper runs the installed MCP server' quiet cli "$home/.local/bin/transcriber-cli" mcp
+check 'mcp rejects extra arguments' not cli "$home/.local/bin/transcriber-cli" mcp --port 1
+# shellcheck disable=SC2016 # the fake server expands $TRANSCRIBER_CLI itself
+printf '#!/usr/bin/env bash\necho "cli=$TRANSCRIBER_CLI"\n' > "$server"
+check 'mcp passes the wrapper path to the server' \
+  test "$(cli "$home/.local/bin/transcriber-cli" mcp)" = "cli=$home/.local/bin/transcriber-cli"
+
+new_home
+plugin_mcp() { env -i HOME="$home" PATH="$fakes:/usr/bin:/bin" "$wrapper_src" mcp; }
+check 'plugin copy builds the MCP server on first use' quiet plugin_mcp
+check 'plugin copy records the MCP server source' test -s "$home/.local/share/transcribe-for-agents/transcriber-mcp.source"
+check 'MCP build progress stays off stdout' test -z "$(plugin_mcp 2>/dev/null)"
+printf 'stale\n' > "$home/.local/share/transcribe-for-agents/transcriber-mcp.source"
+check 'plugin copy rebuilds a stale MCP server' \
+  grep -q 'building the MCP server' <<<"$(plugin_mcp 2>&1 >/dev/null)"
+check 'an up-to-date MCP server is not rebuilt' \
+  not grep -q 'building the MCP server' <<<"$(plugin_mcp 2>&1 >/dev/null)"
+
+# Embedded viewer updates must rebuild the server even when Go sources match.
+copy_plugin="$work/plugin with spaces"
+cp -R "$repo/plugins/transcription-agent-cli" "$copy_plugin"
+new_home
+copy_mcp() { env -i HOME="$home" PATH="$fakes:/usr/bin:/bin" "$copy_plugin/bin/transcriber-cli" mcp; }
+quiet copy_mcp
+printf '\n<!-- viewer update fixture -->\n' >> "$copy_plugin/mcp-server/viewer.html"
+check 'viewer-only plugin updates rebuild the MCP server' \
+  grep -q 'building the MCP server' <<<"$(copy_mcp 2>&1 >/dev/null)"
 
 printf '\n%d failure(s)\n' "$failures"
 ((failures == 0))
