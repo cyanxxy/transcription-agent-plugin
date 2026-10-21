@@ -7,7 +7,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-const transcriptViewerURI = "ui://transcription-agent/transcript-v1.html"
+const transcriptViewerURI = "ui://transcription-agent/transcript-v2.html"
 const transcriptViewerMIME = "text/html;profile=mcp-app"
 
 // The static viewer contains no recordings, credentials, or transcript data.
@@ -33,7 +33,7 @@ func registerTranscriptViewer(s *mcp.Server) {
 			},
 			"permissions": map[string]any{"clipboardWrite": map[string]any{}},
 		},
-		"openai/widgetDescription": "A searchable transcript preview with the saved file path, model, format, and copy action. Shortened previews are clearly labeled; compatible hosts can load the issued full transcript resource.",
+		"openai/widgetDescription": "An interactive transcript: speaker-colored conversation view with talk-time share and speaker filters, raw file view, search, copy, full-screen mode, and one-click summary, action-item, and decision prompts. Shortened previews are clearly labeled; compatible hosts can load the issued full transcript resource.",
 	}
 	s.AddResource(&mcp.Resource{
 		URI:         transcriptViewerURI,

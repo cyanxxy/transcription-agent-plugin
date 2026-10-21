@@ -45,7 +45,7 @@ The bundles are unsigned, so Claude Desktop shows an unverified-publisher notice
   | Field | Value |
   | --- | --- |
   | Name | Transcription Agent |
-  | Short description | Transcribe audio to TXT, SRT, or JSON. |
+  | Short description | Transcribe audio to text, Word, subtitles, or JSON. |
   | Long description | Use the Transcription Agent CLI to create speaker-labeled, timestamped transcripts from local recordings. Requires the CLI installed on your computer, so it runs in Codex and the ChatGPT desktop app. |
   | Category | Productivity |
   | Website | https://github.com/cyanxxy/transcription-agent-plugin |
@@ -94,7 +94,7 @@ Form values:
 | Field | Value |
 | --- | --- |
 | Plugin name | transcription-agent |
-| Short description | Transcribe local audio to speaker-labeled TXT, SRT, or JSON with Gemini, Meta, or Microsoft speech models. Requires transcriber-cli. |
+| Short description | Transcribe local audio to speaker-labeled text, Word, subtitles, CSV, or JSON with Gemini, Meta, or Microsoft speech models. Requires transcriber-cli. |
 | GitHub repository | cyanxxy/transcription-agent-plugin |
 | Plugin path inside the repository | plugins/transcription-agent |
 | Ref to review | v1.2.0 |

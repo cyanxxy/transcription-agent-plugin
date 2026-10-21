@@ -192,6 +192,12 @@ check 'a flag value equal to -model is skipped' \
   test "$(cli "$wrapper" -topic -model -model muse-voice-transcribe-1.0 -i a.m4a)" = 'env META_API_KEY'
 check 'boolean flags do not consume the next argument' \
   test "$(cli "$wrapper" -version -judge=false --model muse-voice-transcribe-1.0)" = 'env META_API_KEY'
+check 'new boolean flags do not consume the next argument' \
+  test "$(cli "$wrapper" -timestamps -model muse-voice-transcribe-1.0 -i a.m4a)" = 'env META_API_KEY'
+check 'speech review adds the Gemini key' \
+  test "$(cli "$wrapper" -speech-review -model muse-voice-transcribe-1.0 -i a.m4a | tr '\n' ' ')" = 'env GEMINI_API_KEY env META_API_KEY '
+check 'disabled speech review keeps only the provider key' \
+  test "$(cli "$wrapper" -speech-review=false -model muse-voice-transcribe-1.0 -i a.m4a)" = 'env META_API_KEY'
 check 'the last -model wins' \
   test "$(cli "$wrapper" -model MAI-Transcribe-2 -model=muse-voice-transcribe-1.0 -i a.m4a)" = 'env META_API_KEY'
 check 'flag parsing stops at the first non-flag argument' \

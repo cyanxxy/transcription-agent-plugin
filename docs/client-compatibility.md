@@ -1,6 +1,6 @@
 # Client compatibility review
 
-Checked October 2, 2026. Installed builds and public release notes are separate evidence; a protocol feature does not establish that every client implements it.
+Checked October 2, 2026; MCP core, Go SDK, MCP Apps, MCPB, and registry schema rechecked October 21, 2026. Installed builds and public release notes are separate evidence; a protocol feature does not establish that every client implements it.
 
 | Client or contract | Verified version | Evidence and status |
 | --- | --- | --- |
@@ -12,6 +12,8 @@ Checked October 2, 2026. Installed builds and public release notes are separate 
 | Claude Agent SDK, TypeScript | 0.3.287 | [Official release](https://github.com/anthropics/claude-agent-sdk-typescript/releases/tag/v0.3.287). The plugin consumes MCP and does not need to embed this SDK. |
 | MCP published core | 2026-07-28 | [Latest specification](https://modelcontextprotocol.io/specification/latest), [key changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog). |
 | MCP implementation in this repository | Go SDK 1.8.0, latest stable September 14 | [Official releases](https://github.com/modelcontextprotocol/go-sdk/releases); pinned in `plugins/transcription-agent-cli/mcp-server/go.mod`, so no SDK migration was needed. |
+| MCP Apps extension | 2026-01-26 stable; ext-apps SDK 2.0.3, September 25 | [Specification](https://github.com/modelcontextprotocol/ext-apps/tree/main/specification). The viewer accepts the version a host negotiates in `ui/initialize`, matching the reference App SDK; tool `_meta.ui.resourceUri` and resource `_meta.ui` are set on both list and read. |
+| MCPB manifest | 0.3, current | [Manifest spec](https://github.com/modelcontextprotocol/mcpb/blob/main/MANIFEST.md); 0.4 only adds the Python `uv` runtime. |
 | Portable plugin package | Agent Plugins 1.0.0 | [Published specification](https://agent-plugins.org/specification). Native package uses a plugin-relative launcher and root `mcp.json`. |
 
 ## Applied improvements
@@ -19,7 +21,7 @@ Checked October 2, 2026. Installed builds and public release notes are separate 
 - **Claude Code:** the CLI plugin now registers MCP automatically, offers optional masked provider settings, and allows 31 minutes per call. Empty settings preserve existing environment credentials and saved keys. See [Claude setup](claude.md).
 - **Codex and local ChatGPT desktop:** an optional `transcription-agent-mcp` package registers the installed CLI with a desktop-safe path resolver and a 31-minute call timeout. The existing `transcription-agent` package remains skills-only for its public listing. The compatibility configuration follows a relative-launcher pattern present in the installed ChatGPT app's bundled plugins.
 - **MCP clients:** precise schemas, provider/dependency status, compact UTF-8 previews, structured execution failures, progress and cancellation, and issued transcript resources let agents recover without shell access or another billed transcription. Concurrent calls to one server using the same `output_path` are rejected; completed transcripts are preserved in a recovery file if another program takes the destination. Artifact registrations are bounded to the latest 1,024 outputs and cannot follow a replaced file into unrelated data. Supported core revisions start at 2025-06-18.
-- **MCP Apps clients:** an inline transcript viewer adds search and copy controls. Text and structured results remain available when a client cannot render Apps. Browser checks and SDK tests exercise the implementation; actual rendering inside ChatGPT and Claude Desktop remains unverified.
+- **MCP Apps clients:** the inline transcript app shows a live transcribing card from the tool input, parses every text format into speaker turns with talk-share chips and filters, keeps a raw file view, and adds search, copy, host-approved full screen, and `ui/message` follow-ups for summaries, action items, and decisions. The resource URI is versioned (`transcript-v2.html`) so hosts do not reuse a cached older viewer. Text and structured results remain available when a client cannot render Apps. Browser checks and SDK tests exercise the implementation; actual rendering inside ChatGPT and Claude Desktop remains unverified.
 - **Skills clients:** MCP is preferred when available, with explicit local-file requirements and timeout recovery. Transcript speech stays untrusted input to the agent.
 
 ## Opportunities that need another deployment or client proof

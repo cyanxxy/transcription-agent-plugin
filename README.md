@@ -33,7 +33,7 @@ Transcription Agent closes that gap with one skill and one command. The agent ru
 | | |
 | --- | --- |
 | **Speaker labels and timestamps** | On every segment. |
-| **TXT, SRT, or JSON** | Ready for notes, subtitles, or code. |
+| **TXT, Markdown, Word, SRT, WebVTT, CSV, or JSON** | Ready for notes, documents, subtitles, spreadsheets, or code. |
 | **Any length, any common format** | FFmpeg converts MP3, WAV, M4A, FLAC, and OGG and splits long audio into chunks each provider accepts. |
 | **Your choice of model** | Google Gemini 3.5 Transcribe, Meta Muse Voice Transcribe, or Microsoft MAI-Transcribe-2. |
 | **Keys stay out of the chat** | Saved on your machine, never passed as command arguments, and sent only to the provider you picked. |
@@ -67,7 +67,7 @@ It will:
 
 1. **Check prerequisites.** If Go or FFmpeg is missing and Homebrew is available, it offers to install them.
 2. **Install the skill** for Claude Code (`~/.claude/skills`) and Codex (`~/.agents/skills`). It skips an agent where the `transcription-agent` plugin is already enabled, so the skill never loads twice, and it moves aside an older copy in Codex's deprecated `~/.codex/skills`.
-3. **Build the CLI** from the pinned `v1.1.0` engine release, verified against its commit hash, into `~/.local/bin/transcriber-cli`, along with the [MCP server](#mcp-server) it runs.
+3. **Build the CLI** from the pinned `v1.5.0` engine release, verified against its commit hash, into `~/.local/bin/transcriber-cli`, along with the [MCP server](#mcp-server) it runs.
 4. **Ask for your API key** without echoing it, or confirm the key you already saved.
 5. **Warn you** if `~/.local/bin` isn't on your `PATH`.
 
@@ -124,7 +124,7 @@ codex plugin add transcription-agent-mcp@transcription-agent-tools
 
 This package registers the local MCP server, checks `~/.local/bin` even when a desktop app's `PATH` is limited, and allows 31 minutes per tool call in Codex. Set `TRANSCRIBER_CLI` to an absolute executable path to use another installation. It contains no skill, so it can be installed alongside `transcription-agent` without loading the skill twice. Remove any manually registered copy of the same MCP server to avoid duplicate tools.
 
-The package also includes portable [Agent Plugins 1.0](https://agent-plugins.org/specification) configuration. Clients that support MCP Apps can show an inline transcript preview. Actual ChatGPT and Claude Desktop rendering still needs verification in those apps; other clients receive the normal text and structured result. See [the compatibility review](docs/client-compatibility.md) for current release evidence and cloud limitations.
+The package also includes portable [Agent Plugins 1.0](https://agent-plugins.org/specification) configuration. Clients that support MCP Apps show an interactive transcript app: a live progress card while the recording is transcribed, a speaker-colored conversation view with each speaker's share of the talk, speaker filters, search, copy, full-screen mode, and one-click *Summarize*, *Action items*, and *Decisions* follow-ups. Actual ChatGPT and Claude Desktop rendering still needs verification in those apps; other clients receive the normal text and structured result. See [the compatibility review](docs/client-compatibility.md) for current release evidence and cloud limitations.
 
 ### Claude Desktop
 
@@ -181,7 +181,15 @@ transcriber-cli -model muse-voice-transcribe-1.0 -i interview.wav -o interview.j
 
 # Plain text with Microsoft MAI-Transcribe-2, printed to stdout
 transcriber-cli -model MAI-Transcribe-2 -i podcast.mp3
+
+# A Word document; the format comes from the -o extension
+transcriber-cli -i lecture.m4a -o lecture.docx
+
+# Dutch and English speech, without timestamps in the notes
+transcriber-cli -i call.m4a -o call.md -language-codes nl-NL,en-US -timestamps=false
 ```
+
+Formats: `txt`, `md`, `docx`, `srt`, `vtt`, `csv`, and `json`. Without `-format`, the CLI uses the `-o` extension, else `txt`; `docx` needs `-o`. `-speech-review` sends a Meta or Microsoft transcript through an extra Gemini review pass, which needs a Gemini key too.
 
 > [!WARNING]
 > `-o` replaces an existing file. Choose an unused path unless you mean to overwrite it.
@@ -201,7 +209,7 @@ network_access = true
 
 | Tool | What it does |
 | --- | --- |
-| `transcribe` | Transcribes `audio_path` to `txt`, `srt`, or `json`, saves it beside the audio or at `output_path`, and returns a bounded preview plus a link to the completed transcript. Reports progress and stops the engine if the client cancels. MCP Apps clients can show the inline viewer. |
+| `transcribe` | Transcribes `audio_path` to `txt`, `md`, `srt`, `vtt`, `csv`, or `json` (Word output is CLI-only), saves it beside the audio or at `output_path`, and returns a bounded preview plus a link to the completed transcript. Reports progress and stops the engine if the client cancels. MCP Apps clients show the interactive transcript app. |
 | `auth_status` | Shows provider configuration and FFmpeg availability, without showing keys. |
 
 `transcribe` never replaces an existing file unless `overwrite` is true, including a file that appears while the transcription runs, and `output_path` must end in the format's extension.

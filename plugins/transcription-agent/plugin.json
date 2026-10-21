@@ -20,7 +20,7 @@
     "com.openai": {
       "interface": {
         "displayName": "Transcription Agent",
-        "shortDescription": "Transcribe audio to TXT, SRT, or JSON.",
+        "shortDescription": "Transcribe audio to text, Word, subtitles, or JSON.",
         "longDescription": "Use the Transcription Agent CLI to create speaker-labeled, timestamped transcripts from local recordings.",
         "developerName": "cyanxxy",
         "category": "Productivity",

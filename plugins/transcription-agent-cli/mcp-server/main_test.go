@@ -161,7 +161,7 @@ func TestTranscribeRejectsBadArguments(t *testing.T) {
 		{"relative path", map[string]any{"audio_path": "memo.ogg"}, "must be an absolute path"},
 		{"missing file", map[string]any{"audio_path": filepath.Join(t.TempDir(), "none.mp3")}, "cannot read audio_path"},
 		{"not audio", map[string]any{"audio_path": audioFile(t, "notes.md")}, "must be an MP3"},
-		{"unknown format", map[string]any{"audio_path": audio, "format": "vtt"}, "/properties/format"},
+		{"unknown format", map[string]any{"audio_path": audio, "format": "docx"}, "/properties/format"},
 		{"unknown model", map[string]any{"audio_path": audio, "model": "whisper-1"}, "/properties/model"},
 		{"existing output", map[string]any{"audio_path": audio}, "already exists"},
 		{"wrong extension", map[string]any{"audio_path": audio, "output_path": filepath.Join(t.TempDir(), ".zshrc")}, "must end in .txt"},

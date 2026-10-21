@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.cyanxxy/transcription-agent",
   "title": "Transcription Agent",
-  "description": "Transcribe local audio into speaker-labeled TXT, SRT, or JSON with Gemini, Meta, or Microsoft.",
+  "description": "Speaker-labeled transcripts, subtitles, or JSON from local audio via Gemini, Meta, or Microsoft.",
   "version": "1.2.0",
   "repository": {
     "url": "https://github.com/cyanxxy/transcription-agent-plugin",

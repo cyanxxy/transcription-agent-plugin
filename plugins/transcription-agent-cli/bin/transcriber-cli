@@ -7,8 +7,8 @@ set -euo pipefail
 
 # Keep in sync with install.sh; tests/install_test.sh checks that they match.
 engine_url='https://github.com/cyanxxy/transcription-agent-go.git'
-engine_ref='v1.1.0'
-engine_sha='db8313a7ef90a5d20e027328d0cab8d20fc28e8d'
+engine_ref='v1.5.0'
+engine_sha='ccb5f79fb22d67d57caec30e5c1b781e4cb6e769'
 
 data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/transcribe-for-agents"
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/transcribe-for-agents"
@@ -245,8 +245,9 @@ fi
 # Find -model the way the engine's Go flag package does: stop at "--" or the
 # first non-flag argument, and skip the value of every flag that takes one.
 # Keep bool_flags in sync with the engine's boolean flags.
-bool_flags=' h help version judge agentic auto-format remove-fillers skill-router '
+bool_flags=' h help version timestamps judge speech-review agentic auto-format remove-fillers skill-router '
 model='gemini-3.5-transcribe'
+speech_review=false
 args=("$@")
 for ((i = 0; i < ${#args[@]}; i++)); do
   arg="${args[i]}"
@@ -254,9 +255,13 @@ for ((i = 0; i < ${#args[@]}; i++)); do
   name="${arg#-}"
   name="${name#-}"
   if [[ "$name" == *=* ]]; then
-    [[ "${name%%=*}" != model ]] || model="${name#*=}"
+    case "${name%%=*}" in
+      model) model="${name#*=}" ;;
+      speech-review) case "${name#*=}" in 1|t|T|true|TRUE|True) speech_review=true ;; *) speech_review=false ;; esac ;;
+    esac
     continue
   fi
+  [[ "$name" != speech-review ]] || speech_review=true
   [[ "$bool_flags" != *" $name "* ]] || continue
   if [[ "$name" == model && $((i + 1)) -lt ${#args[@]} ]]; then model="${args[i + 1]}"; fi
   i=$((i + 1))
@@ -267,6 +272,8 @@ case "$model" in
   MAI-Transcribe-2) providers=(microsoft microsoft-endpoint) ;;
   *) fail "unsupported model: $model (use gemini-3.5-transcribe, muse-voice-transcribe-1.0, or MAI-Transcribe-2)" ;;
 esac
+# -speech-review sends a Meta or Microsoft transcript through Gemini review.
+[[ "$speech_review" == false || " ${providers[*]} " == *" gemini "* ]] || providers+=(gemini)
 
 for item in gemini meta microsoft microsoft-endpoint; do
   variable="$(env_name "$item")"

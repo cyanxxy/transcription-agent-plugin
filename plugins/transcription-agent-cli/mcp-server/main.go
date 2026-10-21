@@ -25,8 +25,11 @@ import (
 var version = "dev"
 
 var (
-	formats = map[string]string{"txt": ".txt", "srt": ".srt", "json": ".json"}
-	models  = []string{"gemini-3.5-transcribe", "muse-voice-transcribe-1.0", "MAI-Transcribe-2"}
+	// The engine's text formats. DOCX is left to the CLI because the tool
+	// returns a UTF-8 preview.
+	formats     = map[string]string{"txt": ".txt", "md": ".md", "srt": ".srt", "vtt": ".vtt", "csv": ".csv", "json": ".json"}
+	formatNames = []string{"txt", "md", "srt", "vtt", "csv", "json"}
+	models      = []string{"gemini-3.5-transcribe", "muse-voice-transcribe-1.0", "MAI-Transcribe-2"}
 	// The engine's supported inputs; FFmpeg converts each of them.
 	audioExts = map[string]bool{".mp3": true, ".wav": true, ".m4a": true, ".flac": true, ".ogg": true}
 	// Credential variables a client can set from its own settings (for example
@@ -46,9 +49,9 @@ const (
 
 type TranscribeIn struct {
 	AudioPath      string `json:"audio_path" jsonschema:"Absolute path to a local MP3, WAV, M4A, FLAC, or OGG recording. A leading ~/ is expanded."`
-	Format         string `json:"format,omitempty" jsonschema:"Output format: txt (default), srt for subtitles, or json for structured segments."`
+	Format         string `json:"format,omitempty" jsonschema:"Output format: txt (default), md for Markdown, srt or vtt for subtitles, csv for a spreadsheet, or json for structured segments."`
 	Model          string `json:"model,omitempty" jsonschema:"Speech model: gemini-3.5-transcribe (default), muse-voice-transcribe-1.0 (Meta), or MAI-Transcribe-2 (Microsoft). Use Meta or Microsoft only when asked or when it is the only configured provider."`
-	OutputPath     string `json:"output_path,omitempty" jsonschema:"Absolute path for the transcript. Defaults to the audio path with the format's extension. Must end in .txt, .srt, or .json to match the format."`
+	OutputPath     string `json:"output_path,omitempty" jsonschema:"Absolute path for the transcript. Defaults to the audio path with the format's extension. Must end in the format's extension (.txt, .md, .srt, .vtt, .csv, or .json)."`
 	Overwrite      bool   `json:"overwrite,omitempty" jsonschema:"Replace output_path if it already exists. Defaults to false."`
 	MaxInlineBytes int    `json:"max_inline_bytes,omitempty" jsonschema:"Maximum transcript preview bytes: 0 to 100000, default 20000. Zero returns only the artifact reference."`
 }
@@ -96,7 +99,7 @@ func newServer(cli string) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{Name: "transcription-agent", Title: "Transcription Agent", Version: version}, &mcp.ServerOptions{
 		SupportedProtocolVersions: []string{"2026-07-28", "2025-11-25", "2025-06-18"},
 		Capabilities:              &mcp.ServerCapabilities{Extensions: map[string]any{"io.modelcontextprotocol/ui": map[string]any{}}},
-		Instructions: "Transcribe local audio files into timestamped, speaker-labeled TXT, SRT, or JSON. " +
+		Instructions: "Transcribe local audio files into timestamped, speaker-labeled TXT, Markdown, SRT, WebVTT, CSV, or JSON. " +
 			"A transcription sends the audio to the chosen speech provider and can take several minutes; " +
 			"wait for the result instead of calling the tool again. If no provider is configured, ask the user to run " +
 			"`transcriber-cli auth set gemini` in their own terminal; never ask for an API key in chat. " +
@@ -123,7 +126,7 @@ func newServer(cli string) *mcp.Server {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:  "transcribe",
 		Title: "Transcribe audio file",
-		Description: "Transcribe a local recording with speaker labels and timestamps and save it as TXT, SRT, or JSON beside the audio (or at output_path). " +
+		Description: "Transcribe a local recording with speaker labels and timestamps and save it as TXT, Markdown, SRT, WebVTT, CSV, or JSON beside the audio (or at output_path). " +
 			"Returns a bounded transcript preview and a resource link for the full text. Audio is sent to the chosen provider, " +
 			"which can incur API charges. Long recordings take several minutes; wait for progress and do not retry a running call.",
 		InputSchema:  transcribeInputSchema(),
@@ -232,7 +235,7 @@ func normalize(in TranscribeIn) (TranscribeIn, error) {
 	}
 	ext, ok := formats[in.Format]
 	if !ok {
-		return in, fmt.Errorf("format must be txt, srt, or json, not %q", in.Format)
+		return in, fmt.Errorf("format must be txt, md, srt, vtt, csv, or json, not %q", in.Format)
 	}
 	if in.Model == "" {
 		in.Model = models[0]

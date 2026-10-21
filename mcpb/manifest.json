@@ -4,7 +4,7 @@
   "name": "transcription-agent",
   "display_name": "Transcription Agent",
   "version": "__VERSION__",
-  "description": "Transcribe local recordings into speaker-labeled, timestamped TXT, SRT, or JSON with Gemini, Meta, or Microsoft speech models.",
+  "description": "Transcribe local recordings into speaker-labeled, timestamped text, Markdown, subtitles, CSV, or JSON with Gemini, Meta, or Microsoft speech models.",
   "long_description": "Give Claude a local MP3, WAV, M4A, FLAC, or OGG recording and get back a transcript with speaker labels and timestamps, saved beside the audio as plain text, SRT subtitles, or JSON segments. Audio is sent only to the speech provider you choose: Google Gemini 3.5 Transcribe (default), Meta Muse Voice Transcribe, or Microsoft MAI-Transcribe-2. Requires FFmpeg (for example `brew install ffmpeg`). Keys you enter here are kept in secure storage; keys saved with `transcriber-cli auth set` also work.",
   "author": {
     "name": "cyanxxy",
@@ -39,7 +39,7 @@
   "tools": [
     {
       "name": "transcribe",
-      "description": "Transcribe a local recording with speaker labels and timestamps and save it as TXT, SRT, or JSON."
+      "description": "Transcribe a local recording with speaker labels and timestamps and save it as TXT, Markdown, SRT, WebVTT, CSV, or JSON."
     },
     {
       "name": "auth_status",

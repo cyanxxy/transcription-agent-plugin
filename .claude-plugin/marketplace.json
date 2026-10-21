@@ -10,7 +10,7 @@
       "name": "transcription-agent",
       "displayName": "Transcription Agent",
       "source": "./plugins/transcription-agent",
-      "description": "Transcribe local audio to TXT, SRT, or JSON with Transcription Agent.",
+      "description": "Transcribe local audio to text, Word, subtitles, or JSON with Transcription Agent.",
       "category": "productivity",
       "tags": ["audio", "transcription", "diarization", "subtitles"]
     },

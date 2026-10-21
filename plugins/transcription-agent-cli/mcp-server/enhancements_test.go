@@ -40,7 +40,7 @@ func TestDiscoverySchemasAndClientMetadata(t *testing.T) {
 				t.Fatal("unexpected arguments must be rejected")
 			}
 			properties := schema["properties"].(map[string]any)
-			if len(properties["format"].(map[string]any)["enum"].([]any)) != 3 {
+			if len(properties["format"].(map[string]any)["enum"].([]any)) != len(formatNames) {
 				t.Fatal("format enum missing")
 			}
 			if properties["max_inline_bytes"].(map[string]any)["default"] != float64(defaultInlineBytes) {

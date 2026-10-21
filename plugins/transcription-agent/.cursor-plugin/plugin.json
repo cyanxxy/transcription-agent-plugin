@@ -1,7 +1,7 @@
 {
   "name": "transcription-agent",
   "version": "1.2.0",
-  "description": "Transcribe local audio to TXT, SRT, or JSON with Transcription Agent.",
+  "description": "Transcribe local audio to text, Word, subtitles, or JSON with Transcription Agent.",
   "author": {
     "name": "cyanxxy"
   },

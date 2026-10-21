@@ -20,7 +20,7 @@ import (
 const maxResourceBytes = 16 * 1024 * 1024
 const maxIssuedArtifacts = 1024
 
-var mimeTypes = map[string]string{"txt": "text/plain", "srt": "application/x-subrip", "json": "application/json"}
+var mimeTypes = map[string]string{"txt": "text/plain", "md": "text/markdown", "srt": "application/x-subrip", "vtt": "text/vtt", "csv": "text/csv", "json": "application/json"}
 
 type artifact struct {
 	path    string

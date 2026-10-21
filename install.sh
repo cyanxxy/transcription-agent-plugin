@@ -6,8 +6,8 @@ set -euo pipefail
 repo_url='https://github.com/cyanxxy/transcription-agent-plugin.git'
 # Keep the engine pin in sync with plugins/transcription-agent-cli/bin/transcriber-cli.
 engine_url='https://github.com/cyanxxy/transcription-agent-go.git'
-engine_ref='v1.1.0'
-engine_sha='db8313a7ef90a5d20e027328d0cab8d20fc28e8d'
+engine_ref='v1.5.0'
+engine_sha='ccb5f79fb22d67d57caec30e5c1b781e4cb6e769'
 
 usage() {
   cat <<'USAGE'
