@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - name: ShellCheck
         if: runner.os == 'Linux'
-        run: shellcheck install.sh plugins/transcription-agent-cli/bin/transcriber-cli plugins/transcription-agent-cli/mcp/launch plugins/transcription-agent-mcp/scripts/launch-mcp.sh tests/*_test.sh mcpb/build.sh mcpb/launch
+        run: shellcheck install.sh plugins/transcription-agent-cli/scripts/transcriber-cli plugins/transcription-agent-cli/mcp/launch plugins/transcription-agent-mcp/scripts/launch-mcp.sh tests/*_test.sh mcpb/build.sh mcpb/launch
       - name: Validate JSON manifests
         run: |
           for f in .claude-plugin/marketplace.json .agents/plugins/marketplace.json .cursor-plugin/marketplace.json \

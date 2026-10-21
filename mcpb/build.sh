@@ -16,7 +16,7 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$2"
 out="$(cd "$2" && pwd)"
 cli_plugin="$repo/plugins/transcription-agent-cli"
-wrapper="$cli_plugin/bin/transcriber-cli"
+wrapper="$cli_plugin/scripts/transcriber-cli"
 
 pin() { sed -n "s/^$1='\\(.*\\)'\$/\\1/p" "$wrapper"; }
 engine_url="$(pin engine_url)" engine_ref="$(pin engine_ref)" engine_sha="$(pin engine_sha)"

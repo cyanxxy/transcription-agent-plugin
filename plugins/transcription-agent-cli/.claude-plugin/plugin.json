@@ -2,7 +2,7 @@
   "name": "transcription-agent-cli",
   "displayName": "Transcription Agent CLI",
   "version": "1.2.0",
-  "description": "Provides transcriber-cli and MCP transcription tools in Claude Code, building the engine on first use so no separate installer is needed.",
+  "description": "Local MCP transcription tools for Claude Code and Cowork, building the engine on first use so no separate installer is needed.",
   "author": {
     "name": "cyanxxy",
     "url": "https://github.com/cyanxxy"
@@ -10,6 +10,7 @@
   "homepage": "https://github.com/cyanxxy/transcription-agent-plugin#readme",
   "repository": "https://github.com/cyanxxy/transcription-agent-plugin",
   "license": "Apache-2.0",
+  "icon": "./assets/icon.png",
   "documentationUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/docs/claude.md",
   "supportUrl": "https://github.com/cyanxxy/transcription-agent-plugin/issues",
   "privacyPolicyUrl": "https://github.com/cyanxxy/transcription-agent-plugin/blob/main/PRIVACY.md",

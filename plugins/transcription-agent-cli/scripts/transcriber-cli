@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # transcribe-for-agents wrapper: loads saved provider credentials, then runs the
 # transcriber-cli.bin engine installed by install.sh. The same file is the
-# Claude Code transcription-agent-cli plugin's bin/transcriber-cli, which builds
-# the engine on first use when install.sh has not.
+# transcription-agent-cli plugin's scripts/transcriber-cli, which builds the
+# engine on first use when install.sh has not. It lives in scripts/, not bin/,
+# because claude.ai and Cowork refuse plugins with a top-level bin/ directory.
 set -euo pipefail
 
 # Keep in sync with install.sh; tests/install_test.sh checks that they match.

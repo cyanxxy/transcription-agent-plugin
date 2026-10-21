@@ -19,9 +19,9 @@ options = ['TRANSCRIBER_PLUGIN_' + name for name in providers]
 with tempfile.TemporaryDirectory(prefix='claude launcher test ') as directory:
     root = Path(directory)
     (root / 'mcp').mkdir()
-    (root / 'bin').mkdir()
+    (root / 'scripts').mkdir()
     shutil.copy2(source, root / 'mcp' / 'launch')
-    wrapper = root / 'bin' / 'transcriber-cli'
+    wrapper = root / 'scripts' / 'transcriber-cli'
     wrapper.write_text('''#!/usr/bin/env bash
 set -euo pipefail
 [[ "$#" -eq 1 && "$1" == mcp ]]

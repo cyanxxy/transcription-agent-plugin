@@ -4,7 +4,7 @@
     "name": "cyanxxy",
     "url": "https://github.com/cyanxxy"
   },
-  "description": "Transcription Agent plugins: a shared audio transcription skill and the command-line engine for Claude Code.",
+  "description": "Transcription Agent plugins: a shared audio transcription skill and local MCP transcription tools.",
   "plugins": [
     {
       "name": "transcription-agent",
@@ -18,7 +18,7 @@
       "name": "transcription-agent-cli",
       "displayName": "Transcription Agent CLI",
       "source": "./plugins/transcription-agent-cli",
-      "description": "Claude Code only: adds transcriber-cli to Claude's PATH so you don't need the installer. Needs Go, git, and FFmpeg.",
+      "description": "Local MCP transcription tools for Claude Code and Cowork on your computer, no installer needed. Builds on first use; needs Go, git, and FFmpeg.",
       "category": "productivity",
       "tags": ["audio", "transcription", "cli"]
     }

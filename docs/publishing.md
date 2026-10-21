@@ -33,7 +33,8 @@ The bundles are unsigned, so Claude Desktop shows an unverified-publisher notice
 ### Anthropic (claude.ai, Cowork, and Claude Code)
 
 - Submit at <https://claude.ai/directory/manage> (needs a paid claude.ai plan). See the [pre-submission checklist](https://claude.com/docs/plugins/pre-submission-checklist).
-- Submit **`transcription-agent` only**. It has no top-level `bin/`, so claude.ai and Cowork accept it. `transcription-agent-cli` has a `bin/` folder, which makes claude.ai and Cowork refuse the whole plugin; keep it in this repository's marketplace for Claude Code users.
+- Each plugin folder is its own submission, and each has the README and license the checklist requires. Neither has a top-level `bin/`, so claude.ai and Cowork accept both.
+- Expect `transcription-agent-cli` to be held for a reviewer: its MCP server builds the engine from source on first use (`git clone` and `go build`), and the scripts it runs live in a subfolder of the repository. Disclose this in the listing.
 - State plainly that the skill needs `transcriber-cli` installed on the user's computer, so it works in Claude Code and in Cowork sessions on the user's machine, not in claude.ai chat on the web.
 - The MCPB bundle is a separate listing path for Claude Desktop; it comes from the MCP registry entry above.
 

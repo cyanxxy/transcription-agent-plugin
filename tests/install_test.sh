@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-wrapper_src="$repo/plugins/transcription-agent-cli/bin/transcriber-cli"
+wrapper_src="$repo/plugins/transcription-agent-cli/scripts/transcriber-cli"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 failures=0
@@ -218,7 +218,7 @@ for name in engine_url engine_ref engine_sha; do
     test -n "$(pin "$name" "$wrapper_src")" -a "$(pin "$name" "$repo/install.sh")" = "$(pin "$name" "$wrapper_src")"
 done
 
-# The Claude Code plugin's bin/transcriber-cli builds the engine on first use
+# The Claude plugin's scripts/transcriber-cli builds the engine on first use
 # when install.sh has not installed it.
 new_home
 plugin_cli() {
@@ -264,7 +264,7 @@ check 'an up-to-date MCP server is not rebuilt' \
 copy_plugin="$work/plugin with spaces"
 cp -R "$repo/plugins/transcription-agent-cli" "$copy_plugin"
 new_home
-copy_mcp() { env -i HOME="$home" PATH="$fakes:/usr/bin:/bin" "$copy_plugin/bin/transcriber-cli" mcp; }
+copy_mcp() { env -i HOME="$home" PATH="$fakes:/usr/bin:/bin" "$copy_plugin/scripts/transcriber-cli" mcp; }
 quiet copy_mcp
 printf '\n<!-- viewer update fixture -->\n' >> "$copy_plugin/mcp-server/viewer.html"
 check 'viewer-only plugin updates rebuild the MCP server' \

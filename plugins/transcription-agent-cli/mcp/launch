@@ -19,4 +19,4 @@ unset TRANSCRIBER_PLUGIN_GEMINI_API_KEY TRANSCRIBER_PLUGIN_META_API_KEY
 unset TRANSCRIBER_PLUGIN_AZURE_SPEECH_KEY TRANSCRIBER_PLUGIN_AZURE_SPEECH_ENDPOINT
 
 plugin_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "$plugin_root/bin/transcriber-cli" mcp
+exec "$plugin_root/scripts/transcriber-cli" mcp

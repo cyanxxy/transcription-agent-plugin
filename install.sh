@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo_url='https://github.com/cyanxxy/transcription-agent-plugin.git'
-# Keep the engine pin in sync with plugins/transcription-agent-cli/bin/transcriber-cli.
+# Keep the engine pin in sync with plugins/transcription-agent-cli/scripts/transcriber-cli.
 engine_url='https://github.com/cyanxxy/transcription-agent-go.git'
 engine_ref='v1.5.0'
 engine_sha='ccb5f79fb22d67d57caec30e5c1b781e4cb6e769'
@@ -116,7 +116,7 @@ main() {
     source_dir="$temp_dir/plugin"
   fi
   local skill_dir="$source_dir/plugins/transcription-agent/skills/transcribe-for-agents"
-  local wrapper="$source_dir/plugins/transcription-agent-cli/bin/transcriber-cli"
+  local wrapper="$source_dir/plugins/transcription-agent-cli/scripts/transcriber-cli"
   [[ -f "$skill_dir/SKILL.md" && -f "$wrapper" ]] || fail 'skill or CLI wrapper is missing from the source repository'
 
   local bin_dir="$HOME/.local/bin"

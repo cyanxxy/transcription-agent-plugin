@@ -47,7 +47,7 @@ Pick the line that matches how you work. Everything runs on macOS and Linux.
 | --- | --- |
 | Claude Code or Codex in the ChatGPT desktop app | [The installer](#the-installer); optionally add the [native MCP plugin](#native-mcp-plugin) |
 | Claude Code, without a separate installer | [The Claude Code CLI plugin](#claude-code-plugins) |
-| Claude Desktop | [The MCPB bundle](#claude-desktop) |
+| Claude Desktop (Cowork) | [The plugin from this marketplace](#claude-desktop), or the MCPB bundle |
 | Cursor, GitHub Copilot, OpenCode, or another [Agent Skills agent](#supported-agents) | [The installer, then the Skills CLI](#other-agent-skills-agents) |
 | Any other MCP client | [The installer, then register the server](#other-mcp-clients) |
 
@@ -96,12 +96,12 @@ curl -fsSL https://raw.githubusercontent.com/cyanxxy/transcription-agent-plugin/
 
 ### Claude Code plugins
 
-This repository is a Claude Code marketplace with two plugins:
+This repository is a Claude plugin marketplace with two plugins. Both install in Claude Code, claude.ai, and the Claude desktop app:
 
 | Plugin | Contains | Use it when |
 | --- | --- | --- |
-| `transcription-agent-cli` | `transcriber-cli` on Claude's `PATH`, an automatically registered MCP server, and masked provider settings. Builds the engine on first use (needs Go, git, and FFmpeg). Installs `transcription-agent` for the skill. | You don't want to run the installer. |
-| `transcription-agent` | The skill only. Also installs in claude.ai and Cowork. | `transcriber-cli` is already installed. |
+| `transcription-agent-cli` | An automatically registered local MCP server and masked provider settings. Builds the engine on first use (needs Go, git, and FFmpeg). Installs `transcription-agent` for the skill. Works in Claude Code and in Cowork sessions on your computer. | You don't want to run the installer. |
+| `transcription-agent` | The skill only. | `transcriber-cli` is already installed. |
 
 ```bash
 claude plugin marketplace add cyanxxy/transcription-agent-plugin
@@ -111,7 +111,7 @@ claude plugin marketplace add cyanxxy/transcription-agent-plugin
 claude plugin install transcription-agent-cli@transcription-agent-tools
 ```
 
-The CLI plugin's command is on Claude's `PATH`, not your terminal's. Configure a key in the plugin's masked settings, set `GEMINI_API_KEY`, or ask Claude for the command's full path and run `<path> auth set gemini` in your terminal. Its MCP tools are registered automatically, with a 31-minute timeout for long recordings. See [Claude setup and verified versions](docs/claude.md).
+Configure a key in the plugin's masked settings, set `GEMINI_API_KEY`, or run `scripts/transcriber-cli auth set gemini` from the plugin's folder in your terminal. The wrapper sits in `scripts/` rather than `bin/` because claude.ai and Cowork refuse plugins with a top-level `bin/` directory, so it isn't added to Claude's `PATH`; Claude uses the plugin's MCP tools instead. Its MCP tools are registered automatically, with a 31-minute timeout for long recordings. See [Claude setup and verified versions](docs/claude.md).
 
 ### Native MCP plugin
 
@@ -128,7 +128,9 @@ The package also includes portable [Agent Plugins 1.0](https://agent-plugins.org
 
 ### Claude Desktop
 
-Download `transcription-agent-mcp-darwin.mcpb` from the [latest release](https://github.com/cyanxxy/transcription-agent-plugin/releases/latest) and open it. The bundle includes the engine for Apple silicon and Intel Macs; you only need FFmpeg (`brew install ffmpeg`). Enter a key in the extension's settings, or leave them empty to use one saved with `transcriber-cli auth set`.
+**As a plugin:** open **Customize > Plugins**, select **Add > Add marketplace**, enter `cyanxxy/transcription-agent-plugin`, then add **Transcription Agent CLI** from **Discover**. Its tools run in Cowork sessions on your computer (chat doesn't start local MCP servers) and follow your account into Claude Code. It builds the engine on first use, so you need Go, git, and FFmpeg. Cowork doesn't prompt for plugin settings: save a key first with the installer's `--agent none` mode or `transcriber-cli auth set gemini`.
+
+**As an extension:** download `transcription-agent-mcp-darwin.mcpb` from the [latest release](https://github.com/cyanxxy/transcription-agent-plugin/releases/latest) and open it. The bundle includes the engine for Apple silicon and Intel Macs; you only need FFmpeg (`brew install ffmpeg`). Enter a key in the extension's settings, or leave them empty to use one saved with `transcriber-cli auth set`.
 
 ### Other Agent Skills agents
 
@@ -365,8 +367,8 @@ plugins/transcription-agent/        Skill-only plugin for every agent
   .claude-plugin/plugin.json        Claude Code manifest
   .codex-plugin/plugin.json         Codex manifest for versions before Agent Plugins
   .cursor-plugin/plugin.json        Cursor manifest
-plugins/transcription-agent-cli/    Claude Code plugin with the CLI
-  bin/transcriber-cli               Wrapper: loads credentials, runs the engine and MCP server
+plugins/transcription-agent-cli/    Claude plugin with the local MCP server
+  scripts/transcriber-cli           Wrapper: loads credentials, runs the engine and MCP server
   mcp-server/                       Go MCP server behind transcriber-cli mcp
 mcpb/                               MCPB bundle manifest, launcher, and build script
 server.json                         MCP registry entry

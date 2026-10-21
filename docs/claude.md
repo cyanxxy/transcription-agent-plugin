@@ -25,7 +25,7 @@ If you already registered this server manually, keep a single active registratio
 
 ## Claude Desktop and Cowork
 
-Use the release's MCPB extension for local Claude Desktop access. The `transcription-agent-cli` plugin contains `bin/`, so Claude's web and Cowork plugin installer rejects it. The shared skill-only package can be listed, but it still requires an execution environment with the CLI and credentials. Installing a skill alone does not give a cloud conversation access to recordings on your computer.
+In the desktop app, open **Customize > Plugins**, select **Add > Add marketplace**, enter `cyanxxy/transcription-agent-plugin`, and add **Transcription Agent CLI**. It keeps its wrapper in `scripts/` rather than a top-level `bin/`, which claude.ai and Cowork refuse to install. Its local MCP server runs in Cowork sessions on your computer and in Claude Code, not in chat. Cowork doesn't prompt for plugin settings, so save a key with `transcriber-cli auth set gemini` or the installer's `--agent none` mode. The release's MCPB extension remains an alternative for Claude Desktop. Installing a skill alone does not give a cloud conversation access to recordings on your computer.
 
 Claude's [September release notes](https://support.claude.com/en/articles/12138966-release-notes) announce the September 25 plugin developer portal and analytics, and the September 16 rollout of Cowork capabilities into conversations. Directory submission remains a separate maintainer action; see [publishing.md](publishing.md).
 
